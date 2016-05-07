@@ -3,9 +3,9 @@
 export C_FORCE_ROOT="true"
 sudo apt-get update
 #sudo apt-get upgrade -y
-sudo apt-get install -y python-pip gfortran
+sudo apt-get install -y python-pip gfortran git
 sudo pip install celery
-#curl {source to app.py}  > app.py
-#curl {source to eonclient.b64 (client base 64 encoded)} | base64 -d > eonclient && chmod 777 eonclient
+git clone https://github.com/MaxAndersson/openstackeon.git
+base64 -d $PWD/openstackeon/eon/eon/openstackeon/eonclient.b64 > eonclient && chmod 777 eonclient
 export EON_CLIENT =$PWD/eonclient
-celery -A app worker -b $MASTER_IP
+celery -A app worker -b $MASTER_IP --workdir=$PWD/openstackeon/eon/eon/oscelery
