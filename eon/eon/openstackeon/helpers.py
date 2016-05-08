@@ -102,7 +102,7 @@ def auth_rec(clouds,envfile = None):
 def get_default_profile(master,project_id):
     #TODO Implement default profile handler
     if master:
-        return 
+        return
     else :
          return
 
@@ -150,9 +150,10 @@ def get_profile(cloud,master,project_id):
     return dict(product)
 
 def boot_n(client, profile, number_servers):
-    return [boot(client,profile) for n in range(0,number_servers)]
 
-def boot(client,profile):
+    return [boot(client,profile,uuid.uuid1()) for n in range(0,number_servers)]
+
+def boot(client,profile, a_id = None):
         select = lambda x,y:  dict([[k,y[k]] for k in x if k in y.keys()])
         f = open(profile['context'])
         if 'inject' in profile.keys():
@@ -166,9 +167,12 @@ def boot(client,profile):
         f.close()
         if type(profile['key_name']) is not unicode:
             profile['key_name'] = profile['key_name'].name
-        profile['name'] = profile['name']
+
+
         profile['userdata'] = userdata
         config = select(['image','userdata','key_name','flavor','name'],profile)
+        if a_id != None:
+            config['name'] = profile['name'] + '-' + str(a_id)
         try:
             return client.servers.create(**config)
         except Exception as e:
@@ -224,15 +228,27 @@ def strip_profile(profile):
     profile['floating_ip_pool'] = profile['floating_ip_pool'].name
     profile['flavor'] = profile['flavor'].id
 
-
+def isRunning():
+    running = os.path.join(os.path.dirname(os.path.abspath(__file__)),'.running')
+    if os.path.isfile(running):
+        res = pickle.load(open(running))
+        ## Check if instance is running and get ip
+        return res
+    else:
+        return None
+def save_running(results):
+    running = os.path.join(os.path.dirname(os.path.abspath(__file__)),'.running')
+    res = pickle.dump(results,open(running,'w'))
 
 def run(rc_files,n_workers,scratchpath,master_index = None, envfile = None):
+        res = isRunning()
+        if res == None:
             cloudsCred = parseRC(rc_files)
             clouds = auth_rec(cloudsCred,envfile)
             clouds = dict(clouds)
             assert(len(n_workers) == len(clouds.values()))
             selection = dict(enumerate(clouds.keys()))
-            active_instances = []
+
             try:
                 if master_index == None:
                     selected = input("Please select cloud to boot master " + str(selection) + "\n -> ")
@@ -248,7 +264,7 @@ def run(rc_files,n_workers,scratchpath,master_index = None, envfile = None):
 
                 master_profile['context'] = os.path.join(os.path.dirname(os.path.abspath(__file__)),'master.sh')
                 master = boot(master_client,master_profile) # for now
-                active_instances.append(master)
+
                 flag = 0
                 backoff = 2
                 while flag != 1:
@@ -264,40 +280,33 @@ def run(rc_files,n_workers,scratchpath,master_index = None, envfile = None):
                         sleep(backoff)
                         pass
 
-                #master.terminate()
-                #sys.exit()
-
-
-
                 for obj in worker_prep:
                     obj['profile']['inject'] = {"master_ip" : "MASTER_IP={}".format(master_ip)}
                     obj['profile']['context'] = os.path.join(os.path.dirname(os.path.abspath(__file__)),'slave.sh')
 
                 workers = {str(i) : boot_n(**worker_conf) for i,worker_conf in zip(range(0,len(worker_prep)), worker_prep)}
-                active_instances.append(workers.values())
-                print vars(master)
-                print active_instances
-
                 master_ip = master_ip[master_ip.keys()[0]][1]['addr'] ## TODO Clean up selection!!!
 
-                ##build check, blocking
-                #check_master(master_ip)
-                #check_slaves(master_ip)
+                workers_by_cloud = workers.values()
+                worker_ids = [[worker.id for worker in worker_cloud] for worker_cloud in workers_by_cloud ]
+                worker_dict = dict(zip(clouds.keys(),worker_ids))
+
+
                 result = {
-                    #"clients" : clouds,
                     "master_index": selected,
-                    #"master_profile": strip_profile(master_profile),
+                    "clouds": clouds.keys(),
                     "master" : master.id,
                     "master_ip" : master_ip,
-                    "workers" : [] ,
+                    "workers" : worker_dict,
                     "timestamp" : time()
                     }
-                print result
-
+                print save_running(result)
                 return result
             except Exception as e:
-                print "Critical exception caught, {} running".format(active_instances)
+                print "Critical exception caught, {} running".format(master_ip)
                 raise e
+        else:
+            return res
 
 if __name__ == "__main__":
     run()

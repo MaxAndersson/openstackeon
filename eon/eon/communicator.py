@@ -25,6 +25,7 @@ import glob
 import re
 import numpy
 import openstackeon
+from openstackeon.tasks import eon_work
 # To ensure backward compatibility
 import sys
 if sys.version_info < (2, 5):
@@ -1306,13 +1307,9 @@ class OSP(Communicator):
         #print scratchpath,bundle_size,rc_files,n_workers
 
         Communicator.__init__(self, scratchpath, bundle_size)
-        if celery_ip == None:
-            result = openstackeon.run(rc_files,n_workers,scratchpath,master_index,envfile)
-            ip = result['master_ip']
-        else:
-            ip = celery_ip
-        self.celery = Celery('tasks',backend='amqp',broker=ip) #TODO Add security
-
+        result = openstackeon.run(rc_files,n_workers,scratchpath,master_index,envfile)
+        self.ip = result['master_ip']
+        print result
 
         jobs_path = os.path.join(scratchpath,'.jobs')
         if os.path.isfile(jobs_path):
@@ -1348,12 +1345,13 @@ class OSP(Communicator):
         bundles = self.make_bundles(jobpaths,invariants)
         self.jobs = [self.submit_path(jobpath) for jobpath in bundles]
         while all([job.ready() for job in self.jobs]) is not True:
+            print [job.ready() for job in self.jobs] 
             sleep(0.1)
         jobs = open(jobs_path,'w')
         pickle.dump(self.jobs,jobs)
 
     def get_queue_size(self):
-	print "get_queue_size"
+	print "get_queue_size", self.ip
         return 0
 
     def cleanup(self):

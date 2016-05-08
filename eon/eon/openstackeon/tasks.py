@@ -1,11 +1,11 @@
-
 from celery import Celery
 import subprocess
 import base64,os,io,tarfile
 
 
 app = Celery('tasks',
-             broker='amqp://'
+             broker='amqp://130.238.29.37',
+             backend ='amqp://130.238.29.37'
              )
 
 CLIENT_PATH = '/eonclient'
@@ -17,6 +17,8 @@ def tarboll(source_dir):
         tar.add(source_dir, arcname=os.path.basename(source_dir))
     IO.seek(0)
     return IO
+def update(new_broker):
+    app = Celery('tasks',broker='amqp://{}'.format(new_broker),backend='amqp')
 
 def tar64(source_dir):
         return base64.b64encode(tarboll(source_dir).read())
@@ -24,12 +26,12 @@ def tar64(source_dir):
 def hello(message = 'random'):
     print "hello {}".format(message)
 
-@app.task(bind=True)
+@app.task(bind=True, name ='tasks.eon_work')
 def eon_work(self,message,path):
     request_id = self.request.id
     print base64.b64decode(message)
     IO = io.BytesIO(base64.b64decode(message))
-    job_path = './eon_jobs/' + request_id
+    job_path = '/tmp/eon_jobs/' + request_id
     print job_path
     with tarfile.TarFile(fileobj=IO,mode='r') as tar:
         tar.extractall(job_path)
