@@ -24,7 +24,7 @@ import cPickle as pickle
 import glob
 import re
 import numpy
-import openstackeon
+import openstackeon,base64
 from openstackeon.tasks import eon_work
 # To ensure backward compatibility
 import sys
@@ -1310,8 +1310,8 @@ class OSP(Communicator):
         result = openstackeon.run(rc_files,n_workers,scratchpath,master_index,envfile)
         self.ip = result['master_ip']
         print result
-
-        jobs_path = os.path.join(scratchpath,'.jobs')
+        self.scratchpath = scratchpath
+        jobs_path = os.path.join(self.scratchpath,'.jobs')
         if os.path.isfile(jobs_path):
 		    jobs = open(jobs_path,'r')
 		    self.jobs = pickle.load(jobs)
@@ -1323,7 +1323,9 @@ class OSP(Communicator):
         '''Moves work from queue to results path.'''
         results = [job.get() for job in self.jobs if job.ready() == True]
         for (path,b64) in results:
-                  path = os.path.join(resultpath,path)
+                  path = os.path.join(resultspath,path)
+                  if not os.path.exists(path):
+                      os.mkdir(path)
                   f = open(os.path.join(path,'out.dat'),'w')
                   f.write(base64.b64decode(b64))
                   f.close()
@@ -1344,9 +1346,10 @@ class OSP(Communicator):
            is run. This method doesn't return anything.'''
         bundles = self.make_bundles(jobpaths,invariants)
         self.jobs = [self.submit_path(jobpath) for jobpath in bundles]
-        while all([job.ready() for job in self.jobs]) is not True:
-            print [job.ready() for job in self.jobs] 
-            sleep(0.1)
+        #while all([job.ready() for job in self.jobs]) is not True:
+        #    print [job.ready() for job in self.jobs]
+        #    sleep(0.1)
+        jobs_path = os.path.join(self.scratchpath,'.jobs')
         jobs = open(jobs_path,'w')
         pickle.dump(self.jobs,jobs)
 
@@ -1356,5 +1359,6 @@ class OSP(Communicator):
 
     def cleanup(self):
         '''Kill running OS instances'''
+        print "heres cleanup"
         for instance in self.instances:
             instance.terminate()

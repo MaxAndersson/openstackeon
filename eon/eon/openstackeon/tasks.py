@@ -1,11 +1,27 @@
 from celery import Celery
+from celery.task.control import inspect
 import subprocess
 import base64,os,io,tarfile
 
-
-app = Celery('tasks',
-             broker='amqp://130.238.29.37',
-             backend ='amqp://130.238.29.37'
+def isRunning():
+    running = os.path.join(os.path.dirname(os.path.abspath(__file__)),'.running')
+    if os.path.isfile(running):
+        res = pickle.load(open(running))
+        ## Check if instance is running and get ip
+        return res
+    else:
+        return None
+current_info = isRunning()
+if current_info != None
+    master_ip = current_info['master_ip']
+    app = Celery('tasks',
+                broker = 'amqp://{}'.format(master_ip)
+                backend = 'amqp://{}'.format(master_ip)
+                )
+else:
+    app = Celery('tasks',
+             broker='amqp://',
+             backend ='amqp://'
              )
 
 CLIENT_PATH = '/eonclient'
@@ -17,9 +33,8 @@ def tarboll(source_dir):
         tar.add(source_dir, arcname=os.path.basename(source_dir))
     IO.seek(0)
     return IO
-def update(new_broker):
-    app = Celery('tasks',broker='amqp://{}'.format(new_broker),backend='amqp')
-
+def queue_size():
+    return inspect().scheduled()
 def tar64(source_dir):
         return base64.b64encode(tarboll(source_dir).read())
 @app.task()
