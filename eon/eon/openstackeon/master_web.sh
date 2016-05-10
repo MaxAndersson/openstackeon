@@ -8,4 +8,10 @@ sudo rabbitmqctl add_user EON EON
 sudo rabbitmqctl add_vhost EON
 sudo rabbitmqctl set_permissions -p EON EON ".*" ".*" ".*"
 
+#Web
+echo "web" >> .env
+sudo apt-get install -y python-numpy gfortran python-novaclient
+sudo pip install novaclient ase flask
+
+#Flower
 flower &> /dev/null &

@@ -229,6 +229,7 @@ def strip_profile(profile):
     profile['flavor'] = profile['flavor'].id
 
 def isRunning():
+    ##TODO Change to scratchpath
     running = os.path.join(os.path.dirname(os.path.abspath(__file__)),'.running')
     if os.path.isfile(running):
         res = pickle.load(open(running))
@@ -237,10 +238,12 @@ def isRunning():
     else:
         return None
 def save_running(results):
+    ##TODO Change to scratchpath
     running = os.path.join(os.path.dirname(os.path.abspath(__file__)),'.running')
     res = pickle.dump(results,open(running,'w'))
 
 def run(rc_files,n_workers,scratchpath,master_index = None, envfile = None):
+        ##TODO Add in support for preconfiguration (setup.py)
         res = isRunning()
         if res == None:
             cloudsCred = parseRC(rc_files)

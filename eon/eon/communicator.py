@@ -1306,6 +1306,8 @@ class OSP(Communicator):
 
         #print scratchpath,bundle_size,rc_files,n_workers
         Communicator.__init__(self, scratchpath, bundle_size)
+
+        #TODO Change to webconf parameter instead.
         if envfile != None:
             f = open(envfile)
             line = f.readline().strip()
@@ -1316,7 +1318,7 @@ class OSP(Communicator):
         else:
             result = openstackeon.run(rc_files,n_workers,scratchpath,master_index,envfile)
             self.ip = result['master_ip']
-        print result
+
         self.scratchpath = scratchpath
         jobs_path = os.path.join(self.scratchpath,'.jobs')
         if os.path.isfile(jobs_path):
@@ -1328,6 +1330,7 @@ class OSP(Communicator):
 
     def get_results(self, resultspath,keep_result):
         '''Moves work from queue to results path.'''
+        ##TODO Add timeout
         results = [job.get() for job in self.jobs if job.ready() == True]
         for (path,b64) in results:
                   path = os.path.join(resultspath,path)
@@ -1351,6 +1354,7 @@ class OSP(Communicator):
         '''Run up to clients to process the work in jobpaths.
            The job directories are moved to the scratch path before the calculcation
            is run. This method doesn't return anything.'''
+        ##TODO ADD timeout.
         bundles = self.make_bundles(jobpaths,invariants)
         self.jobs = [self.submit_path(jobpath) for jobpath in bundles]
         #while all([job.ready() for job in self.jobs]) is not True:
@@ -1361,11 +1365,12 @@ class OSP(Communicator):
         pickle.dump(self.jobs,jobs)
 
     def get_queue_size(self):
+    ##TODO Get queue size from Celery
 	print "get_queue_size", self.ip
         return 0
 
     def cleanup(self):
         '''Kill running OS instances'''
-        print "heres cleanup"
+        ##TODO Fix cleanup
         for instance in self.instances:
             instance.terminate()
