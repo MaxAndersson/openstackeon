@@ -1305,10 +1305,17 @@ class OSP(Communicator):
     def __init__(self, scratchpath, bundle_size, rc_files, n_workers = None, master_index = 0, envfile = None, celery_ip = None):
 
         #print scratchpath,bundle_size,rc_files,n_workers
-
         Communicator.__init__(self, scratchpath, bundle_size)
-        result = openstackeon.run(rc_files,n_workers,scratchpath,master_index,envfile)
-        self.ip = result['master_ip']
+        if envfile != None:
+            f = open(envfile)
+            line = f.readline().strip()
+            if line == "web":
+                self.ip = '127.0.0.1'
+            else:
+                pass
+        else:
+            result = openstackeon.run(rc_files,n_workers,scratchpath,master_index,envfile)
+            self.ip = result['master_ip']
         print result
         self.scratchpath = scratchpath
         jobs_path = os.path.join(self.scratchpath,'.jobs')
