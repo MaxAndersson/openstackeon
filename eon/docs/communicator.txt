@@ -24,11 +24,11 @@ such as ARC_.
 **type**:
 
     Default: local
-    
-    Options: 
+
+    Options:
 
         :ref:`local <communicator-local>`: The local communicator runs the
-        calculations on the same computer that the server is run on. 
+        calculations on the same computer that the server is run on.
 
         :ref:`cluster <communicator-cluster>`: A job scheduler can be used to
         run jobs through user supplied shell scripts. Examples are given for
@@ -50,7 +50,7 @@ such as ARC_.
 
     The meaning of the variable changes depending on the communicator **type**.
 
-    For the *local* communicator **num_jobs** number of jobs will be run every 
+    For the *local* communicator **num_jobs** number of jobs will be run every
     time the program is invoked.
 
     For the *cluster* communicator **num_jobs** is the desired sum of the queued
@@ -68,10 +68,10 @@ such as ARC_.
 
     Default: 0 (unlimited)
 
-    The maximum number of akmc jobs that can be running at once for the current 
+    The maximum number of akmc jobs that can be running at once for the current
     state. For communicators with queues (cluster and boinc), this means that no
     more jobs will be queued if the number of jobs queued and in progress equals
-    or exceeds this number. The default of 0 turns this off is equivalent to 
+    or exceeds this number. The default of 0 turns this off is equivalent to
     unlimited.
 
 **jobs_per_bundle**:
@@ -81,7 +81,7 @@ such as ARC_.
     In eon a job is defined as task that the eon client executes, such as a
     process search or a parallel replica run. Sometimes it makes sense to run
     more than one of the same type of job at a time.
-    
+
     For example, when using empirical potentials to do saddle searches a single
     search might only take several seconds on modern CPUs. In order to improve
     performance more than one client job (*e.g.*, process search, dimer,
@@ -132,7 +132,7 @@ the communicator.
     type: string
 
     default: ``./``
-    
+
 **name_prefix**:
 
     Default: eon
@@ -141,7 +141,7 @@ the communicator.
     used named. In order to make the jobs identifiable by the user the
     **name_prefix** can be set to a meaningful string that will always be prepended
     to the job names.
-    
+
 **queued_jobs**:
 
     Default: queued_jobs.sh
@@ -160,8 +160,8 @@ the communicator.
     path where the Eon client should be executed. All of the needed client files
     will be placed in this directory. The script must return the job id of the
     submitted job. This is how Eon internally keeps track of jobs.
-    
-**cancel_job**: 
+
+**cancel_job**:
 
     Default: cancel_job.sh
 
@@ -212,7 +212,7 @@ because the one additional rank is needed to become the server.
 BOINC
 =====
 
-The BOINC communicator allows Eon to submit workunits to a BOINC project. 
+The BOINC communicator allows Eon to submit workunits to a BOINC project.
 
     **boinc_project_dir**: This is the full path to the root of the BOINC project directory.
 
@@ -227,7 +227,7 @@ The BOINC communicator allows Eon to submit workunits to a BOINC project.
     workunit template.
 
 **boinc_re_template_path**:
-    
+
     Default: None
 
     This is the path, relative from the **boinc_project_dir**, to the boinc
@@ -258,15 +258,15 @@ The BOINC communicator allows Eon to submit workunits to a BOINC project.
 ARC
 ===
 
-When eon is run with the ARC communicator, jobs are executed on the clusters 
-on which the user is authorized.  To prevent over floating the local queues 
-are jobs only submitted to a cluster when the user do not have any jobs queued 
+When eon is run with the ARC communicator, jobs are executed on the clusters
+on which the user is authorized.  To prevent over floating the local queues
+are jobs only submitted to a cluster when the user do not have any jobs queued
 on this specific cluster.
 
 **arc_blacklist**
     default: None
 
-    Jobs will not be sent to the listed clusters, host addresses should be 
+    Jobs will not be sent to the listed clusters, host addresses should be
     separated by a ','
 
 **arc_max_submit**
@@ -292,6 +292,22 @@ same directory as config.ini and uses makes use of 8 CPUs.
     type = local
     client_path = eonclient-custom
     number_of_cpus = 8
+
+
+Openstack (Celery)
+-----
+
+    The openstack communicator requires you to download rc-files from your cloud provider for configureation purposes.
+    Multiple providers are seperated with ";", the same goes for number of workers. Instances that will be instaceiated is the sum of worker + 1 for the master
+    The responsibilities of the eon_server can be configured to "web" or "local"
+
+    .. code-block:: ini
+
+      [Communicator]
+      type=openstack
+      openstack_rc_files=/path/to/rc-file;/path/to/rc-file2
+      openstack_n_workers=2;2
+      openstack_eon_server="web"
 
 Cluster
 -------

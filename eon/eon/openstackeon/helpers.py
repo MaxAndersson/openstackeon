@@ -3,7 +3,7 @@ from time import sleep, time
 from novaclient import client
 
 
-# Utilities
+# This Utility makes an in-memory tarfile
 def tarboll(source_dir):
     IO = io.BytesIO('wr')
     IOzip = io.BytesIO('wr')
@@ -11,12 +11,12 @@ def tarboll(source_dir):
         tar.add(source_dir, arcname=os.path.basename(source_dir))
     IO.seek(0)
     return IO
-
+# This Utility function collects a directory in to an in-memory tarfile and base64 encode it
 def tar64(source_dir):
         return base64.b64encode(tarboll(source_dir).read())
 
 
-# Map RC-Params
+# Translates Rc-file variables to nova api compatible
 def novaconfig (cloud):
     return {
             "username" : cloud["OS_USERNAME"],
@@ -39,39 +39,27 @@ def clientInfo(client):
     "security_groups": client.security_groups.list()
     }
 
-#Primative parseing of RC-Files
+#Parseing of RC-Files
 def parseRC(cloud_rc):
     result = []
     for cloud in cloud_rc:
         rows = os.popen("cat " + cloud + " |grep export").read()
-
         rows = rows.strip().split("\n")
         rows = [row[7:] for row in rows]
         credentials = [row.split("=") for row in rows]
         print credentials
         credentials = dict([[key,value.strip('"')] for [key,value] in credentials ])
-        #TODO Error handleing
         credentials["OS_PASSWORD"] = "" #getpass.getpass("Please enter password for " + credentials["OS_USERNAME"] + "@" + credentials["OS_TENANT_NAME"] + ":" + credentials['OS_REGION_NAME'] + "\n ->")
         result.append(credentials)
     return result
 
-# Set the password , or get password from envfile
-def get_pass(credentials,envfile= None):
-    if envfile != None:
-        f = open(envfile,'r')
-        p = base64.b64decode(f.readline()).strip('\n').split(":") #TODO Make any line parseable.
-        f.close()
-        if p[0] == credentials['OS_TENANT_NAME']:
-            credentials['OS_PASSWORD'] = p[1]
-        else:
-            credentials["OS_PASSWORD"] = getpass.getpass("Username: " + credentials["OS_USERNAME"] + ",\n Tenant: " + credentials["OS_TENANT_NAME"] + ",\n Region:" + credentials['OS_REGION_NAME'] +"\n Password ->" )
+# Set the password
+def get_pass(credentials):
+    credentials["OS_PASSWORD"] = getpass.getpass("Username: " + credentials["OS_USERNAME"] + ",\n Tenant: " + credentials["OS_TENANT_NAME"] + ",\n Region:" + credentials['OS_REGION_NAME'] +"\n Password ->" )
 
-    else:
-        credentials["OS_PASSWORD"] = getpass.getpass("Username: " + credentials["OS_USERNAME"] + ",\n Tenant: " + credentials["OS_TENANT_NAME"] + ",\n Region:" + credentials['OS_REGION_NAME'] +"\n Password ->" )
-
-def auth(cred,envfile = None):
+def auth(cred):
     if cred["OS_PASSWORD"] == "":
-        get_pass(cred,envfile)
+        get_pass(cred)
     config = novaconfig(cred)
     try:
         a_client = client.Client(version="2.0",**config)
@@ -83,13 +71,13 @@ def auth(cred,envfile = None):
         raise e
     return [config["project_id"] +":"+ config['region_name'],a_client]
 
-def auth_rec(clouds,envfile = None):
+def auth_rec(clouds):
         cloudsRET = []
         for cloud in clouds:
             finished = 0
             while finished is not 1:
                 try:
-                    cloudsRET.append(auth(cloud,envfile))
+                    cloudsRET.append(auth(cloud))
                     finished = 1
                     print "OK"
                     pass
@@ -228,26 +216,26 @@ def strip_profile(profile):
     profile['floating_ip_pool'] = profile['floating_ip_pool'].name
     profile['flavor'] = profile['flavor'].id
 
-def isRunning():
+def isRunning(scratchpath):
     ##TODO Change to scratchpath
-    running = os.path.join(os.path.dirname(os.path.abspath(__file__)),'.running')
+    running = os.path.join(scratchpath,'.running')
     if os.path.isfile(running):
         res = pickle.load(open(running))
         ## Check if instance is running and get ip
         return res
     else:
         return None
-def save_running(results):
+def save_running(results,scratchpath):
     ##TODO Change to scratchpath
-    running = os.path.join(os.path.dirname(os.path.abspath(__file__)),'.running')
+    running = os.path.join(scratchpath,'.running')
     res = pickle.dump(results,open(running,'w'))
 
-def run(rc_files,n_workers,scratchpath,master_index = None, envfile = None):
+def run(rc_files,n_workers,scratchpath,master_index = None):
         ##TODO Add in support for preconfiguration (setup.py)
-        res = isRunning()
+        res = isRunning(scratchpath)
         if res == None:
             cloudsCred = parseRC(rc_files)
-            clouds = auth_rec(cloudsCred,envfile)
+            clouds = auth_rec(cloudsCred)
             clouds = dict(clouds)
             assert(len(n_workers) == len(clouds.values()))
             selection = dict(enumerate(clouds.keys()))
@@ -288,7 +276,7 @@ def run(rc_files,n_workers,scratchpath,master_index = None, envfile = None):
                     obj['profile']['context'] = os.path.join(os.path.dirname(os.path.abspath(__file__)),'slave.sh')
 
                 workers = {str(i) : boot_n(**worker_conf) for i,worker_conf in zip(range(0,len(worker_prep)), worker_prep)}
-                master_ip = master_ip[master_ip.keys()[0]][1]['addr'] ## TODO Clean up selection!!!
+                master_ip = master_ip[master_ip.keys()[0]][1]['addr'] ## FIXME This is not fool proof, by any means.
 
                 workers_by_cloud = workers.values()
                 worker_ids = [[worker.id for worker in worker_cloud] for worker_cloud in workers_by_cloud ]

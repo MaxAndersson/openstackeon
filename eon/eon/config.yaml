@@ -864,10 +864,7 @@ Communicator:
         openstack_master_index:
             kind: int
             default: 0
-        openstack_env:
-            kind: string
-            default: None
-        openstack_celery_ip:
+        openstack_eon_server:
             kind: string
             default: None
 

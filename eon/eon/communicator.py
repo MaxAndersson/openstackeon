@@ -1302,22 +1302,20 @@ class ARC(Communicator):
         return n
 
 class OSP(Communicator):
-    def __init__(self, scratchpath, bundle_size, rc_files, n_workers = None, master_index = 0, envfile = None, celery_ip = None):
+    def __init__(self, scratchpath, bundle_size, rc_files, n_workers = None, master_index = 0, eon_server = None):
 
         #print scratchpath,bundle_size,rc_files,n_workers
         Communicator.__init__(self, scratchpath, bundle_size)
 
-        #TODO Change to webconf parameter instead.
-        if envfile != None:
-            f = open(envfile)
-            line = f.readline().strip()
-            if line == "web":
-                self.ip = '127.0.0.1'
-            else:
-                pass
+
+        if eon_server == "web":
+            self.ip = '127.0.0.1'
+        elif eon_server == "local" and os.path.isfile(os.path.join(scratchpath,'.running')):
+            f = open(os.path.join(scratchpath,'.running'),'r')
+            self.metadata = pickle.load(f)
         else:
-            result = openstackeon.run(rc_files,n_workers,scratchpath,master_index,envfile)
-            self.ip = result['master_ip']
+            self.metadata = openstackeon.run(rc_files,n_workers,scratchpath,master_index)
+            self.ip = self.metadata['master_ip']
 
         self.scratchpath = scratchpath
         jobs_path = os.path.join(self.scratchpath,'.jobs')

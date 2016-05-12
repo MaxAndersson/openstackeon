@@ -254,8 +254,8 @@ def init(config_file = ""):
         config.comm_openstack_rc_files = [string.strip(c) for c in parser.get('Communicator', 'openstack_rc_files').split(';')]
         config.comm_openstack_n_workers =[int(string.strip(c)) for c in parser.get('Communicator', 'openstack_n_workers').split(';')]
         config.comm_openstack_master_index = parser.getint('Communicator','openstack_master_index')
-        config.comm_openstack_env = parser.get('Communicator','openstack_env')
-        config.comm_openstack_celery_ip = parser.get('Communicator', 'openstack_celery_ip')
+        config.comm_openstack_eon_server = parser.get('Communicator','openstack_eon_server')
+
 
     # Process Search options
     config.process_search_minimization_offset = parser.getfloat('Process Search', 'minimization_offset')
