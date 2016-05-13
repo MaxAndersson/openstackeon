@@ -217,7 +217,7 @@ def strip_profile(profile):
     profile['flavor'] = profile['flavor'].id
 
 def isRunning(scratchpath):
-    ##TODO Change to scratchpath
+
     running = os.path.join(scratchpath,'.running')
     if os.path.isfile(running):
         res = pickle.load(open(running))
@@ -226,7 +226,6 @@ def isRunning(scratchpath):
     else:
         return None
 def save_running(results,scratchpath):
-    ##TODO Change to scratchpath
     running = os.path.join(scratchpath,'.running')
     res = pickle.dump(results,open(running,'w'))
 
@@ -291,7 +290,7 @@ def run(rc_files,n_workers,scratchpath,master_index = None):
                     "workers" : worker_dict,
                     "timestamp" : time()
                     }
-                print save_running(result)
+                print save_running(result,scratchpath)
                 return result
             except Exception as e:
                 print "Critical exception caught, {} running".format(master_ip)

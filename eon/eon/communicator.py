@@ -87,8 +87,7 @@ def get_communicator():
         config.comm_openstack_rc_files,
         config.comm_openstack_n_workers,
         config.comm_openstack_master_index,
-        config.comm_openstack_env,
-        config.comm_openstack_celery_ip)
+        config.comm_openstack_eon_server)
     else:
         logger.error(str(config.comm_type)+" is an unknown communicator.")
         raise ValueError()
@@ -1307,7 +1306,6 @@ class OSP(Communicator):
         #print scratchpath,bundle_size,rc_files,n_workers
         Communicator.__init__(self, scratchpath, bundle_size)
 
-
         if eon_server == "web":
             self.ip = '127.0.0.1'
         elif eon_server == "local" and os.path.isfile(os.path.join(scratchpath,'.running')):
@@ -1365,7 +1363,7 @@ class OSP(Communicator):
     def get_queue_size(self):
     ##TODO Get queue size from Celery
 	print "get_queue_size", self.ip
-        return 0
+        return len(self.jobs)
 
     def cleanup(self):
         '''Kill running OS instances'''

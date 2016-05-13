@@ -44,7 +44,7 @@ def make_profile(client):
             return obj64
 
 
-def config(clouds, profiles_config = None, configfile = None):
+def config(clouds, profiles_config = None):
     regions = clouds.keys()
     clients = clouds.values()
     print regions, clients
@@ -55,7 +55,8 @@ def config(clouds, profiles_config = None, configfile = None):
     if profiles_config == None:
         profiles = {}
     else:
-        profiles = pickle.loads(base64.b64decode(profiles_config))
+        f = open(profiles_config)
+        profiles = pickle.loads(base64.b64decode(f))
 
     exit = 0
     selection = ['Add master profile to a region','Add slave profile to a region','Build contextulizeation', 'Package & Exit']
@@ -84,14 +85,7 @@ def config(clouds, profiles_config = None, configfile = None):
             store.append((a_region,'slave',pickle.loads(base64.b64decode(config))))
         elif selected == 2:
             print "Building, please make sure the building process is complete before you save"
-            print store
-            for region in regions:
-                res = {}
-                for (a,b,c) in store:
-                    if a == region:
-                        res.update({b:c})
-                print res
-                profiles.update({region:res})
+
 
         elif selected == 3:
             ##TODO Add validation
@@ -101,15 +95,20 @@ def config(clouds, profiles_config = None, configfile = None):
                     if a == region:
                         res.update({b:c})
                 profiles.update({region:res})
-            obj = pickle.dumps(profiles)
+            if profiles_config != None:
+                pickle.dump(profiles,profiles_config)
+                return
+            else:
+                obj = pickle.dumps(profiles)
             obj64 = base64.b64encode(obj)
             print "Configureation String = {}".format(obj64)
             exit = 1
-            return obj64
+            return obj
 def main():
     rc = sys.argv[1:]
     parse = parseRC(rc)
     clouds =  dict(auth_rec(parse))
-    config(clouds)
+    f= open ('.profiles','wr')
+    config(clouds,f)
 if __name__ == '__main__':
     main()

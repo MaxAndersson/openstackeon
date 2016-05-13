@@ -1,7 +1,7 @@
 from celery import Celery
 from celery.task.control import inspect
 import subprocess
-import base64,os,io,tarfile
+import base64,os,io,tarfile,pickle
 
 def isRunning():
     running = os.path.join(os.path.dirname(os.path.abspath(__file__)),'.running')
@@ -12,10 +12,10 @@ def isRunning():
     else:
         return None
 current_info = isRunning()
-if current_info != None
+if current_info != None:
     master_ip = current_info['master_ip']
     app = Celery('tasks',
-                broker = 'amqp://{}'.format(master_ip)
+                broker = 'amqp://{}'.format(master_ip),
                 backend = 'amqp://{}'.format(master_ip)
                 )
 else:
